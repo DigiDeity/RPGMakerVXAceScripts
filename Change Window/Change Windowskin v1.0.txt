@@ -70,7 +70,6 @@ class Game_Interpreter
   # * function to change the windowksinname
   #--------------------------------------------------------------------------
   def change_windowskin_name(windowskinname)
-    p windowskinname
     if Dir.glob("Graphics/System/" + windowskinname)
       $game_system.window_skin = windowskinname
     end
