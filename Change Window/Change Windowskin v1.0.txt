@@ -56,7 +56,7 @@ class Window_Base
   #--------------------------------------------------------------------------
   def initialize(*args)
     doubleD_initialize_change_window(*args)
-    self.windowskin = Cache.system($game_system.window_skin)
+    self.windowskin = Cache.system($game_system.window_skin) if !SceneManager.scene_is?(Scene_Title)
   end
 end
 #==============================================================================
@@ -73,23 +73,5 @@ class Game_Interpreter
     if Dir.glob("Graphics/System/" + windowskinname)
       $game_system.window_skin = windowskinname
     end
-  end
-end
-#==============================================================================
-# ** Scene_Title
-#------------------------------------------------------------------------------
-#  This class performs the title screen processing.
-#==============================================================================
-class Scene_Title
-  #--------------------------------------------------------------------------
-  # * Aliasing methods
-  #--------------------------------------------------------------------------
-  alias doubleD_start_change_window start
-  #--------------------------------------------------------------------------
-  # * Start Processing
-  #--------------------------------------------------------------------------
-  def start(*args)
-    $game_system.window_skin = "Window"
-    doubleD_start_change_window(*args)
   end
 end
