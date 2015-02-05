@@ -12,6 +12,7 @@
 #║ name of the window you want to use.                                         ║
 #║ Take care where you import the windows since the script only loads images   ║
 #║ from the Graphics/System folder where you have to import the windowimages.  ║
+#║ For example: change_windowskin_name("Window2")                              ║
 #╠Note═════════════════════════════════════════════════════════════════════════╣
 #║ Feel free to contact me if you want to report bugs or any ideas for updates.║
 #║ Also I'm trying to improve my English in genral if you find any big mistakes║
