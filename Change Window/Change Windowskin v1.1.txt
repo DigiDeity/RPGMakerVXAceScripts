@@ -1,0 +1,80 @@
+﻿#╔═════════════════════════════════════════════════════════════════════════════╗
+#║ Change Windowskin v 1.1                                                     ║
+#║  by DigiDeity                                                               ║
+#║  contact: digideity@yandex.com                                              ║
+#║  Want to use this for a commercial purpose? Contact me! :)                  ║
+#╠Description══════════════════════════════════════════════════════════════════╣
+#║ This Script allows the user to change the current used window ingame.       ║
+#╠Usage════════════════════════════════════════════════════════════════════════╣
+#║ To change the current window you have to use a call script even with the    ║
+#║ following code: change_windowskin_name(windowskinname)                      ║
+#║ while windowskinname have to be replaced with a string which contains the   ║
+#║ name of the window you want to use.                                         ║
+#║ Take care where you import the windows since the script only loads images   ║
+#║ from the Graphics/System folder where you have to import the windowimages.  ║
+#║ For example: change_windowskin_name("Window2")                              ║
+#╠Note═════════════════════════════════════════════════════════════════════════╣
+#║ Feel free to contact me if you want to report bugs or any ideas for updates.║
+#║ Also I'm trying to improve my English in genral if you find any big mistakes║
+#║ you would help me by letting me know. ;)                                    ║
+#╚═════════════════════════════════════════════════════════════════════════════╝
+#==============================================================================
+# ** Game_System
+#------------------------------------------------------------------------------
+#  This class handles system data. It saves the disable state of saving and 
+# menus. Instances of this class are referenced by $game_system.
+#==============================================================================
+class Game_System
+  #--------------------------------------------------------------------------
+  # * Public Instance Variables
+  #--------------------------------------------------------------------------
+  attr_accessor :window_skin
+  #--------------------------------------------------------------------------
+  # * Aliasing methods
+  #--------------------------------------------------------------------------
+  alias doubleD_initialize_change_window initialize
+  #--------------------------------------------------------------------------
+  # * Object Initialization
+  #--------------------------------------------------------------------------
+  def initialize(*args)
+    doubleD_initialize_change_window(*args)
+    @window_skin = "Window"
+  end
+end
+#==============================================================================
+# ** Window_Base
+#------------------------------------------------------------------------------
+#  This is a super class of all windows within the game.
+#==============================================================================
+class Window_Base
+  #--------------------------------------------------------------------------
+  # * Aliasing methods
+  #--------------------------------------------------------------------------
+  alias doubleD_initialize_change_window initialize
+  #--------------------------------------------------------------------------
+  # * Object Initialization
+  #--------------------------------------------------------------------------
+  def initialize(*args)
+    doubleD_initialize_change_window(*args)
+    self.windowskin = Cache.system($game_system.window_skin) if !SceneManager.scene_is?(Scene_Title)
+  end
+end
+#==============================================================================
+# ** Game_Interpreter
+#------------------------------------------------------------------------------
+#  An interpreter for executing event commands. This class is used within the
+# Game_Map, Game_Troop, and Game_Event classes.
+#==============================================================================
+class Game_Interpreter
+  #--------------------------------------------------------------------------
+  # * function to change the windowksinname
+  #--------------------------------------------------------------------------
+  def change_windowskin_name(windowskinname)
+    if Dir.glob("Graphics/System/" + windowskinname) && $game_system.window_skin != windowskinname
+      $game_system.window_skin = windowskinname
+      SceneManager.scene.create_all_windows
+    else 
+      puts "The windowskin with the name #{windowskinname} was not found in Graphics/System."
+    end
+  end
+end
