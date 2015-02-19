@@ -1,0 +1,171 @@
+﻿#╔═════════════════════════════════════════════════════════════════════════════╗
+#║ Simple HUD                                                                  ║
+#║  by DigiDeity                                                               ║
+#║  contact: digideity@yandex.com                                              ║
+#║  Want to use this for a commercial purpose? Contact me! :)                  ║
+#╠Description══════════════════════════════════════════════════════════════════╣
+#║ This Script allows the user to use a simple HUD which will display the HP,  ║
+#║ MP, Actor Charset and the name of every actor in the current party.         ║
+#╠Usage════════════════════════════════════════════════════════════════════════╣
+#║ Just setup the setting below this discription and you can start using it.   ║
+#╠Note═════════════════════════════════════════════════════════════════════════╣
+#║ Feel free to contact me if you want to report bugs or any ideas for updates.║
+#║ Also I'm trying to improve my English in genral if you find any big mistakes║
+#║ you would help me by letting me know. ;)                                    ║
+#╚═════════════════════════════════════════════════════════════════════════════╝
+module DoubleD
+  module Simple_HUD
+#╔Settings═════════════════════════════════════════════════════════════════════╗
+# Choose an ID fot the switch which determinates if the HUD is visible
+  VISIBLE_SWITCH_ID = 1
+# Choose the value (0-255) for the opacity of the HUD (Window)
+  WINDOW_ALPHA = 125
+# Choose the value (0-255) for the opacity of the HUD (Window) if the Player 
+# collides with it.
+  WINDOW_COLLIDE_ALPHA = 50
+# Choose the position of the HUD
+# 1 => Top, 2 => Bot, 3 => Left, 4 => Right, 5 => Every Corner (works only with 4 members)
+  HUD_POSITION = 5
+#╚EndOfSetting═════════════════════════════════════════════════════════════════╝
+  end
+end
+include DoubleD::Simple_HUD
+#==============================================================================
+# ** Window_Base_HUD
+#------------------------------------------------------------------------------
+#  This is a super class of all windows within the game to show a simple HUD.
+#==============================================================================
+class Window_Base_HUD < Window_Base
+  #--------------------------------------------------------------------------
+  # * Object Initialization
+  #--------------------------------------------------------------------------
+  def initialize(x,y,actor_id)
+    @actor = $game_party.all_members[actor_id]
+    super(x,y,Graphics.width/4,fitting_height(3))
+    self.opacity = WINDOW_ALPHA
+    refresh
+  end
+  #--------------------------------------------------------------------------
+  # * Create Window Contents
+  #--------------------------------------------------------------------------
+  def refresh      
+    @actor_values = [@actor.mhp,@actor.hp,@actor.mmp,@actor.mp,@actor.character_name,@actor.character_index,@actor.name]
+    contents.clear
+    draw_character(@actor.character_name, @actor.character_index, 12, 32)
+    draw_actor_name(@actor, 32 , 0, self.contents.width-32)
+    draw_actor_hp(@actor, 0, self.contents.height/3,self.contents.width)
+    draw_actor_mp(@actor, 0, self.contents.height/3*2,self.contents.width)
+  end
+  #--------------------------------------------------------------------------
+  # * Frame Update
+  #--------------------------------------------------------------------------
+  def update
+    refresh if need_update? && $game_switches[VISIBLE_SWITCH_ID]
+    update_visibility
+  end
+  #--------------------------------------------------------------------------
+  # * Update the visibility and opacity
+  #--------------------------------------------------------------------------
+  def update_visibility
+    self.visible = $game_switches[VISIBLE_SWITCH_ID]
+    self.opacity = ($game_player.screen_x >= self.x && $game_player.screen_x <= self.x + self.width && $game_player.screen_y >= self.y && $game_player.screen_y <= self.y + self.height) ? WINDOW_COLLIDE_ALPHA : WINDOW_ALPHA
+  end
+  #--------------------------------------------------------------------------
+  # * Determinates if the window have to be redrawn
+  #--------------------------------------------------------------------------
+  def need_update?
+    return @actor_values[0] != @actor.mhp || @actor_values[1] != @actor.hp || @actor_values[2] != @actor.mmp || @actor_values[3] != @actor.mp || @actor_values[4] != @actor.character_name || @actor_values[5] != @actor.character_index || @actor_values[6] != @actor.name
+  end
+end
+#==============================================================================
+# * Simple_HUD
+#------------------------------------------------------------------------------
+#  This is a super class of the simple HUD which will be displayed on the map
+#==============================================================================
+class Simple_HUD
+  #--------------------------------------------------------------------------
+  # * Object Initialization
+  #--------------------------------------------------------------------------
+  def initialize()
+    @hud_windows = []
+    for i in 0...$game_party.all_members.size
+      case HUD_POSITION
+      when 1 # Top
+        @hud_windows.push(Window_Base_HUD.new(Graphics.width/4*i,0,i))
+      when 2 # Bot
+        @hud_windows.push(Window_Base_HUD.new(Graphics.width/4*i,Graphics.height-(3*24+24),i))
+      when 3 # Left
+        @hud_windows.push(Window_Base_HUD.new(0,(3*24+24)*i,i))
+      when 4 # Right
+        @hud_windows.push(Window_Base_HUD.new(Graphics.width-Graphics.width/4,(3*24+24)*i,i))
+      when 5 # Corner
+        case i
+        when 0 
+          @hud_windows.push(Window_Base_HUD.new(0,0,i))
+        when 1
+          @hud_windows.push(Window_Base_HUD.new(Graphics.width-Graphics.width/4,0,i))
+        when 2
+          @hud_windows.push(Window_Base_HUD.new(0,Graphics.height-(3*24+24),i))
+        when 3
+          @hud_windows.push(Window_Base_HUD.new(Graphics.width-Graphics.width/4,Graphics.height-(3*24+24),i))
+        end
+      end
+    end
+    @party_size = $game_party.all_members.size
+  end
+  #--------------------------------------------------------------------------
+  # * Frame Update
+  #--------------------------------------------------------------------------
+  def update
+    if @party_size != $game_party.all_members.size
+      terminate
+      initialize
+    end
+    for window in @hud_windows
+      window.update
+    end
+  end
+  #--------------------------------------------------------------------------
+  # * Terminate all windows 
+  #--------------------------------------------------------------------------
+  def terminate
+    for window in @hud_windows
+      window.dispose
+    end
+  end
+end
+#==============================================================================
+# ** Spriteset_Map
+#------------------------------------------------------------------------------
+#  This class brings together map screen sprites, tilemaps, etc. It's used
+# within the Scene_Map class.
+#==============================================================================
+class Spriteset_Map
+  #--------------------------------------------------------------------------
+  # * Aliased methods
+  #--------------------------------------------------------------------------
+  alias doubleD_simple_hud_initialize initialize
+  alias doubleD_simple_hud_update update
+  alias doubleD_simple_hud_dispose dispose
+  #--------------------------------------------------------------------------
+  # * Object Initialization
+  #--------------------------------------------------------------------------
+  def initialize(*args)
+    doubleD_simple_hud_initialize(*args)
+    @doubleD_simple_hud = Simple_HUD.new()
+  end
+  #--------------------------------------------------------------------------
+  # * Frame Update
+  #--------------------------------------------------------------------------
+  def update(*args)
+    doubleD_simple_hud_update(*args)
+    @doubleD_simple_hud.update if !@doubleD_simple_hud.nil?
+  end
+  #--------------------------------------------------------------------------
+  # * Disposing all stuff
+  #--------------------------------------------------------------------------
+  def dispose(*args)
+    doubleD_simple_hud_dispose(*args)
+    @doubleD_simple_hud.terminate if !@doubleD_simple_hud.nil?
+  end
+end
