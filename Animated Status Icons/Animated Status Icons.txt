@@ -1,0 +1,137 @@
+﻿#╔═════════════════════════════════════════════════════════════════════════════╗
+#║ Animated Status Icons                                                       ║
+#║  by DigiDeity                                                               ║
+#║  contact: digideity@yandex.com                                              ║
+#║  Want to use this for a commercial purpose? Contact me! :)                  ║
+#╠Description══════════════════════════════════════════════════════════════════╣
+#║ This Script allows the user to extend the casual amount of show icons for   ║
+#║ the status effects which are aplied on the actors. They will be shown if the║
+#║ given space to draw the icons is not enough.                                ║
+#╠Note═════════════════════════════════════════════════════════════════════════╣
+#║ Feel free to contact me if you want to report bugs or any ideas for updates.║
+#║ Also I'm trying to improve my English in genral if you find any big mistakes║
+#║ you would help me by letting me know. ;)                                    ║
+#╚═════════════════════════════════════════════════════════════════════════════╝
+module DoubleD
+  module AnimatedStatusIcons
+#╔Settings═════════════════════════════════════════════════════════════════════╗
+# Determinate if the background for the Icons should be drawn
+  DRAW_STATUS_BACKGROUND = true
+# If the background is drawn, this color will be used (R,G,Y,A) 0-255
+  BACKGROUND_COLOR = Color.new(125,125,125,125)
+# Scroll Speed of the Icons in pixel (pixelmovement per frame)
+  SCROLL_SPEED = 1
+# Scroll direction 1=>left;2=>right
+  SCROLL_DIRECTION = 2
+#╚EndOfSetting═════════════════════════════════════════════════════════════════╝
+  end
+end
+#--------------------------------------------------------------------------
+# * Import module: AnimatedStatusIcons
+#--------------------------------------------------------------------------
+include DoubleD::AnimatedStatusIcons
+#==============================================================================
+# ** Window_Base
+#------------------------------------------------------------------------------
+#  This is a super class of all windows within the game.
+#==============================================================================
+class Window_Base
+  #--------------------------------------------------------------------------
+  # * Aliased methods
+  #--------------------------------------------------------------------------
+  alias doubleD_update_animated_status update
+  alias doubleD_initialize_animated_status initialize
+  alias doubleD_dispose_animated_status dispose
+  #--------------------------------------------------------------------------
+  # * Object Initialization
+  #--------------------------------------------------------------------------
+  def initialize(*args)
+    doubleD_initialize_animated_status(*args)
+    @animated_status = {}
+  end
+  #--------------------------------------------------------------------------
+  # * Frame Update
+  #--------------------------------------------------------------------------
+  def update(*args)
+    # aliased method
+    doubleD_update_animated_status(*args)
+    # For actor in party
+    for key in @animated_status.keys
+      # Update Viewport Location
+      if !self.viewport.nil?
+        @animated_status[key][2].rect.x = self.viewport.rect.x - self.viewport.ox + self.x + @animated_status[key][3][0] + padding
+        @animated_status[key][2].rect.y = self.viewport.rect.y - self.viewport.oy + self.y + @animated_status[key][3][1] + padding 
+        @animated_status[key][2].z = self.viewport.z + 1
+      end
+      # Do not scroll if not enough Icons
+      next if @animated_status[key][1].size <= (@animated_status[key][2].rect.width / 24).to_i.floor
+      for sprite in @animated_status[key][1]
+        case SCROLL_DIRECTION
+        # left
+        when 1        
+          sprite.x -= SCROLL_SPEED
+          if sprite.x <= -24
+            id = @animated_status[key][1].index(sprite)
+            id = id == 0 ? -1 : id - 1
+            sprite.x = @animated_status[key][1][id].x + 24
+          end
+        when 2
+          sprite.x += SCROLL_SPEED
+          if sprite.x >= @animated_status[key][2].rect.width
+            id = @animated_status[key][1].index(sprite)
+            id = id == @animated_status[key][1].size - 1 ? 0 : id + 1
+            sprite.x = @animated_status[key][1][id].x - 24
+          end
+        end
+      end
+    end
+  end
+  #--------------------------------------------------------------------------
+  # * Draw State and Buff/Debuff Icons (Overwritten)
+  #--------------------------------------------------------------------------
+  def draw_actor_icons(*args)
+    self.contents.fill_rect(Rect.new(args[1],args[2],args[3].nil? ? 96 : args[3], 24),BACKGROUND_COLOR ) if DRAW_STATUS_BACKGROUND
+    # Create Space for Actor if not already done
+    if !@animated_status.keys.include?(args[0])
+      @animated_status[args[0]] = [[],[],nil,[]]
+      # Create Viewport
+      @animated_status[args[0]][2] = Viewport.new()
+      @animated_status[args[0]][2].z = self.z + 1
+      @animated_status[args[0]][2].rect = Rect.new(self.x + args[1] + padding, self.y + args[2] + padding, args[3].nil? ? 96 : args[3], 24)
+      # Set OffSet
+      @animated_status[args[0]][3] = [args[1],args[2]]
+    end
+    # If Status has changed
+    if @animated_status[args[0]][0] != args[0].state_icons + args[0].buff_icons
+      # Update Status of actor
+      @animated_status[args[0]][0] = args[0].state_icons + args[0].buff_icons
+      # Delete Old Sprites
+      @animated_status[args[0]][1] = []
+      GC.start 
+      # Create Sprites of Icons
+      bitmap = Cache.system("Iconset")
+      for icon_index in @animated_status[args[0]][0]
+        rect = Rect.new(icon_index % 16 * 24, icon_index / 16 * 24, 24, 24)
+        sprite = Sprite.new(@animated_status[args[0]][2])
+        sprite.bitmap = Bitmap.new(24,24)
+        sprite.bitmap.blt(0, 0, bitmap, rect)
+        @animated_status[args[0]][1].push(sprite)
+        @animated_status[args[0]][1][-1].x = @animated_status[args[0]][0].index(icon_index) * 24
+      end
+      bitmap.dispose
+    end
+  end
+  #--------------------------------------------------------------------------
+  # * Draw State and Buff/Debuff Icons (Overwritten)
+  #--------------------------------------------------------------------------
+  def dispose(*args)
+    doubleD_dispose_animated_status(*args)
+    for key in @animated_status.keys
+      for sprite in @animated_status[key][1]
+        sprite.dispose
+      end
+      @animated_status[key][2].dispose
+    end
+    GC.start
+  end
+end
