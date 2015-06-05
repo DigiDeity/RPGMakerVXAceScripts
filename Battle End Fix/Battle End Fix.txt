@@ -1,0 +1,20 @@
+﻿﻿#╔═════════════════════════════════════════════════════════════════════════════╗
+#║ Bug End Fix                                                                 ║
+#║  by DigiDeity                                                               ║
+#║  contact: digideity@yandex.com                                              ║
+#╠Description══════════════════════════════════════════════════════════════════╣
+#║ This Script makes the enemy troop only appear after a battle end if it was  ║
+#║ visible before.                                                             ║
+#╠Note═════════════════════════════════════════════════════════════════════════╣
+#║ Feel free to contact me if you want to report bugs or any ideas for updates.║
+#║ Also I'm trying to improve my English in genral if you find any big mistakes║
+#║ you would help me by letting me know. ;)                                    ║
+#╚═════════════════════════════════════════════════════════════════════════════╝
+class Game_BattlerBase
+  alias doubleD_appear_escape_hide appear
+  def appear(*args)
+    if !@hidden
+      doubleD_appear_escape_hide(*args)
+    end
+  end
+end
