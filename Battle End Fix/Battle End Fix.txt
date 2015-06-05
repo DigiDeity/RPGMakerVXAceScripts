@@ -1,4 +1,4 @@
-﻿﻿#╔═════════════════════════════════════════════════════════════════════════════╗
+﻿#╔═════════════════════════════════════════════════════════════════════════════╗
 #║ Bug End Fix                                                                 ║
 #║  by DigiDeity                                                               ║
 #║  contact: digideity@yandex.com                                              ║
@@ -10,11 +10,23 @@
 #║ Also I'm trying to improve my English in genral if you find any big mistakes║
 #║ you would help me by letting me know. ;)                                    ║
 #╚═════════════════════════════════════════════════════════════════════════════╝
-class Game_BattlerBase
-  alias doubleD_appear_escape_hide appear
-  def appear(*args)
-    if !@hidden
-      doubleD_appear_escape_hide(*args)
+class Game_Battler
+  #--------------------------------------------------------------------------
+  # * Alias methods
+  #--------------------------------------------------------------------------
+  alias doubleD_appear_escape_hide on_battle_end
+  #--------------------------------------------------------------------------
+  # * Processing at End of Battle
+  #--------------------------------------------------------------------------
+  def on_battle_end
+    if @hidden
+      @result.clear
+      remove_battle_states
+      remove_all_buffs
+      clear_actions
+      clear_tp unless preserve_tp?
+    else
+      doubleD_appear_escape_hide
     end
   end
 end
