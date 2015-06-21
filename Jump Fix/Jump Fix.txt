@@ -1,0 +1,122 @@
+﻿#╔═════════════════════════════════════════════════════════════════════════════╗
+#║ Jump Fix                                                                    ║
+#║  by DigiDeity                                                               ║
+#║  contact: digideity@yandex.com                                              ║
+#║  Want to use this for a commercial purpose? Contact me! :)                  ║
+#╠Description══════════════════════════════════════════════════════════════════╣
+#║ This Script fixes a bug which allows the player to jump out of the map and  ║
+#║ in some special cases on places which are not passabale at all.             ║
+#║ Also this script allows the user to let all the follower jump as well.      ║
+#║ The user will find some other settings like a jump delay or if the follower ║
+#║ should jump to the player or their own coordinates.                         ║
+#╠Usage════════════════════════════════════════════════════════════════════════╣
+#║ Just setup the setting below this discription and you can start using it.   ║
+#╠Note═════════════════════════════════════════════════════════════════════════╣
+#║ Feel free to contact me if you want to report bugs or any ideas for updates.║
+#║ Also I'm trying to improve my English in genral if you find any big mistakes║
+#║ you would help me by letting me know. ;)                                    ║
+#╚═════════════════════════════════════════════════════════════════════════════╝
+module DoubleD
+  module JumpSettings
+#╔Settings═════════════════════════════════════════════════════════════════════╗
+# Determinates if the followers should be able to ignore passability of the map
+# and/or events
+  IGNORE_FOLLOWER_THROUGH = false
+# Determinates if the events should be able to ignore passability of the map
+# and/or events
+  IGNORE_EVENT_THROUGH = false
+# Switch id which determinates if player and follower can jump everywhere
+# (for example in cutscenes)
+  SWITCH_ID_IGNORE_EVRYTHING = 2
+# Determinates if the follower of the player should jump as well
+  ENABLE_FOLLOWER_JUMPING = true
+# Determinates if the follower should jump to the coordinates of the Player or
+# their own destination coordinates
+  ENABLE_FOLLOWER_JUMP_TO_PLAYER = true
+# This will handle the after jump delay, so the player wont be able to spam
+# the jump button
+  JUMP_DELAY = 20
+#╚EndOfSetting═════════════════════════════════════════════════════════════════╝
+  end
+end
+#==============================================================================
+# ** Game_Character
+#==============================================================================
+class Game_Character
+  #--------------------------------------------------------------------------
+  # *Alias Methods
+  #--------------------------------------------------------------------------
+  alias doubleD_initialize_jump_delay initialize
+  alias doubleD_jump_fix jump
+  alias doubleD_update_jump_delay update
+  #--------------------------------------------------------------------------
+  # * Object Initialization
+  #--------------------------------------------------------------------------
+  def initialize(*args)
+    @delay = 0
+    doubleD_initialize_jump_delay(*args)
+  end
+  #--------------------------------------------------------------------------
+  # * Frame Update
+  #--------------------------------------------------------------------------
+  def update(*args)
+    @delay = @delay > 0 ? @delay - 1 : 0 if !jumping?
+    doubleD_update_jump_delay(*args)
+  end
+  #--------------------------------------------------------------------------
+  # * Jump
+  #     x_plus : x-coordinate plus value
+  #     y_plus : y-coordinate plus value
+  #--------------------------------------------------------------------------
+  def jump(*args)
+    if self.instance_of?(Game_Player) #Player
+      doubleD_jump_fix(*args) if jump_possible?(x + args[0], y + args[1], self.direction)
+      if DoubleD::JumpSettings::ENABLE_FOLLOWER_JUMPING
+        for char in $game_player.followers.data
+          xdif = DoubleD::JumpSettings::ENABLE_FOLLOWER_JUMP_TO_PLAYER ? $game_player.x - char.x : args[0]
+          ydif = DoubleD::JumpSettings::ENABLE_FOLLOWER_JUMP_TO_PLAYER ? $game_player.y - char.y : args[1]
+          char.jump(xdif,ydif)
+        end
+      end
+    elsif self.instance_of?(Game_Follower) # Follower
+      if DoubleD::JumpSettings::IGNORE_FOLLOWER_THROUGH
+        doubleD_jump_fix(*args) 
+      else
+        doubleD_jump_fix(*args) if jump_possible?(x + args[0], y + args[1], self.direction)
+      end
+    else #Events 
+      if DoubleD::JumpSettings::IGNORE_EVENT_THROUGH
+        doubleD_jump_fix(*args)
+      else
+        doubleD_jump_fix(*args) if jump_possible?(x + args[0], y + args[1], self.direction)
+      end
+    end
+    @delay = DoubleD::JumpSettings::JUMP_DELAY if jumping?
+  end
+  #--------------------------------------------------------------------------
+  # * Determine if Passable for a jump to x,y coordinates
+  #     d : Direction (2,4,6,8)
+  #--------------------------------------------------------------------------
+  def jump_possible?(x, y, d)
+    return false if @delay > 0
+    return true if $game_switches[DoubleD::JumpSettings::SWITCH_ID_IGNORE_EVRYTHING]
+    x2 = $game_map.round_x(x)
+    y2 = $game_map.round_y(y)
+    tmp_through = self.instance_of?(Game_Follower) ? @through && DoubleD::JumpSettings::IGNORE_FOLLOWER_THROUGH : @through
+    return false unless $game_map.valid?(x2, y2)
+    return true if debug_through? ||  tmp_through
+    return false unless map_passable?(x, y, d)
+    return false unless map_passable?(x2, y2, reverse_dir(d))
+    return false if collide_with_characters?(x2, y2)
+    return true
+  end
+end
+#==============================================================================
+# ** Game_Followers
+#==============================================================================
+class Game_Followers
+  #--------------------------------------------------------------------------
+  # * Public Instance Variables
+  #--------------------------------------------------------------------------
+  attr_accessor :data                  # actual follower data
+end

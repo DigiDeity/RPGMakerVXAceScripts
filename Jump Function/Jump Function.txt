@@ -1,0 +1,63 @@
+﻿#╔═════════════════════════════════════════════════════════════════════════════╗
+#║ Jump Function                                                                    ║
+#║  by DigiDeity                                                               ║
+#║  contact: digideity@yandex.com                                              ║
+#║  Want to use this for a commercial purpose? Contact me! :)                  ║
+#╠Description══════════════════════════════════════════════════════════════════╣
+#║ This Script allows the user to enable or disable jumping by pressing a      ║
+#║ button. The Player will jump in the direction he stands and the length of   ║
+#║ the jump can be determinate by a variable. (Supports 8 Directions)          ║
+#╠Usage════════════════════════════════════════════════════════════════════════╣
+#║ Just setup the setting below this discription and you can start using it.   ║
+#╠Note═════════════════════════════════════════════════════════════════════════╣
+#║ Feel free to contact me if you want to report bugs or any ideas for updates.║
+#║ Also I'm trying to improve my English in genral if you find any big mistakes║
+#║ you would help me by letting me know. ;)                                    ║
+#╚═════════════════════════════════════════════════════════════════════════════╝
+module DoubleD
+  module JumpSettings
+#╔Settings═════════════════════════════════════════════════════════════════════╗
+# Determinates which Switch enables or disables the jumping feature
+  SWITCH_ID_ENABLE_JUMPING = 1
+# Variable ID of the variable which will has the value of the range which will
+# be "jumped"
+  VARIABLE_ID_JUMP_RANGE = 1
+# Which button will let the player jump
+  JUMP_BUTTON = :C
+# If you want to play a soundeffect if the player jumps, you can choose it here. If 
+# you don't want to play a sound you can leave it empty. ("")
+  JUMP_SOUND = "Jump1"
+#╚EndOfSetting═════════════════════════════════════════════════════════════════╝
+  end
+end
+#==============================================================================
+# ** Game_Interpreter
+#==============================================================================
+class Game_Interpreter
+  alias doubleD_jump_input_update update
+  def update(*args)
+    doubleD_jump_input_update(*args)
+    if Input.trigger?(DoubleD::JumpSettings::JUMP_BUTTON) && !$game_player.jumping? && $game_switches[DoubleD::JumpSettings::SWITCH_ID_ENABLE_JUMPING]
+      range = $game_variables[DoubleD::JumpSettings::VARIABLE_ID_JUMP_RANGE]
+      case $game_player.direction 
+      when 1 
+        $game_player.jump(-range,range)
+      when 2
+        $game_player.jump(0,range)
+      when 3
+        $game_player.jump(range,range)
+      when 4
+        $game_player.jump(-range,0)
+      when 6
+        $game_player.jump(range,0)
+      when 7
+        $game_player.jump(-range,-range)
+      when 8
+        $game_player.jump(0,-range)
+      when 9
+        $game_player.jump(range,-range)
+      end
+      Audio.se_play("Audio/SE/#{DoubleD::JumpSettings::JUMP_SOUND}") if $game_player.jumping?
+    end
+  end
+end
