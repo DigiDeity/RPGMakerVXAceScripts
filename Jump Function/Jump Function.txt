@@ -22,7 +22,9 @@ module DoubleD
 # Variable ID of the variable which will has the value of the range which will
 # be "jumped"
   VARIABLE_ID_JUMP_RANGE = 1
-# Which button will let the player jump
+# Which button will let the player jump.
+# All the buttons or the names of them can be found in the help by searching for 
+# Input and looking up for the Constants.
   JUMP_BUTTON = :C
 # If you want to play a soundeffect if the player jumps, you can choose it here. If 
 # you don't want to play a sound you can leave it empty. ("")
