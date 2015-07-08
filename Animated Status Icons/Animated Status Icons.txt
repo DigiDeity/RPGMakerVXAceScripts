@@ -23,6 +23,12 @@ module DoubleD
   SCROLL_SPEED = 1
 # Scroll direction 1=>left;2=>right
   SCROLL_DIRECTION = 2
+# Windows where scrolling should be disabled (this is an example how to disable it
+# in the battle screen)
+  WINDOWS_TO_IGNORE = [# <= Do not touch
+  "Window_BattleStatus",
+  "Window_BattleActor",
+  ] # <= Do not touch either!
 #╚EndOfSetting═════════════════════════════════════════════════════════════════╝
   end
 end
@@ -42,6 +48,7 @@ class Window_Base
   alias doubleD_update_animated_status update
   alias doubleD_initialize_animated_status initialize
   alias doubleD_dispose_animated_status dispose
+  alias doubleD_draw_actor_icons draw_actor_icons
   #--------------------------------------------------------------------------
   # * Object Initialization
   #--------------------------------------------------------------------------
@@ -66,6 +73,7 @@ class Window_Base
       # Do not scroll if not enough Icons
       next if @animated_status[key][1].size <= (@animated_status[key][2].rect.width / 24).to_i.floor
       for sprite in @animated_status[key][1]
+        sprite.visible = self.visible if self.visible != sprite.visible
         case SCROLL_DIRECTION
         # left
         when 1        
@@ -90,6 +98,12 @@ class Window_Base
   # * Draw State and Buff/Debuff Icons (Overwritten)
   #--------------------------------------------------------------------------
   def draw_actor_icons(*args)
+    # Stop if window should be ignored
+    if WINDOWS_TO_IGNORE.include?(self.class.name)
+      doubleD_draw_actor_icons(*args)
+      return
+    end
+    print self.class.name
     self.contents.fill_rect(Rect.new(args[1],args[2],args[3].nil? ? 96 : args[3], 24),BACKGROUND_COLOR ) if DRAW_STATUS_BACKGROUND
     # Create Space for Actor if not already done
     if !@animated_status.keys.include?(args[0])
@@ -113,6 +127,7 @@ class Window_Base
       for icon_index in @animated_status[args[0]][0]
         rect = Rect.new(icon_index % 16 * 24, icon_index / 16 * 24, 24, 24)
         sprite = Sprite.new(@animated_status[args[0]][2])
+        sprite.visible = self.visible
         sprite.bitmap = Bitmap.new(24,24)
         sprite.bitmap.blt(0, 0, bitmap, rect)
         @animated_status[args[0]][1].push(sprite)
