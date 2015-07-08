@@ -103,7 +103,6 @@ class Window_Base
       doubleD_draw_actor_icons(*args)
       return
     end
-    print self.class.name
     self.contents.fill_rect(Rect.new(args[1],args[2],args[3].nil? ? 96 : args[3], 24),BACKGROUND_COLOR ) if DRAW_STATUS_BACKGROUND
     # Create Space for Actor if not already done
     if !@animated_status.keys.include?(args[0])
@@ -137,16 +136,38 @@ class Window_Base
     end
   end
   #--------------------------------------------------------------------------
-  # * Draw State and Buff/Debuff Icons (Overwritten)
+  # * Dispose Icons
+  #--------------------------------------------------------------------------
+  def dispose_actor_icons(actor_id)
+    @animated_status.delete($game_party.members[actor_id])
+    GC.start
+  end
+  #--------------------------------------------------------------------------
+  # * Dispose
   #--------------------------------------------------------------------------
   def dispose(*args)
     doubleD_dispose_animated_status(*args)
-    for key in @animated_status.keys
-      for sprite in @animated_status[key][1]
-        sprite.dispose
-      end
-      @animated_status[key][2].dispose
-    end
+    @animated_status = {}
     GC.start
+  end
+end
+#==============================================================================
+# ** Window_Selectable
+#------------------------------------------------------------------------------
+#  This window class contains cursor movement and scroll functions.
+#==============================================================================
+class Window_Selectable
+  #--------------------------------------------------------------------------
+  # * Alias Methods
+  #--------------------------------------------------------------------------
+  alias doubleD_redraw_item redraw_item
+  #--------------------------------------------------------------------------
+  # * Redraw Item
+  #--------------------------------------------------------------------------
+  def redraw_item(*args)
+    if !@animated_status.empty?
+      dispose_actor_icons(args[0])
+    end
+    doubleD_redraw_item(*args)
   end
 end
